@@ -2,43 +2,61 @@
 
 Magpar is a finite element micromagnetic simulator. Its high efficiency and mpi implementation makes it a good option for your simulations. Unfortunately Magpar newest version is from 2010 which makes its installation hard for newcomers. This tutorial will show step by step installation on Ubuntu 16.04. It is advisable to have basic knowledge in Unix operating systems (how to navigate inside terminal etc.).
 
-##  Instalation steps
+## Before you start
+
+Thanks to [virtualmicromagnetics](http://virtualmicromagnetics.org) it is now possible to use docker containers and virtual machines to do your magpar simulations.
+Docker containers does not add big overhead in terms of performance, so I would recommend using them instead of whole installation process.
+With this you only need to have docker installed on your machine. Also it should be possible to run it on MacOs and Windows (although Windows will add huge overhead as it needs to run linux kernel).
+
+After installing docker and having your experiment in known folder created run:
+
+    docker run -v path_to_experiment/experiment:/experiment -ti virtualmicromagnetics/lite:release /bin/bash -l
+
+After a moment this will create a terminal inside your container with setted up Magpar. Now:
+
+    cd experiment
+    mpirun -np 12 magpar
+
+I use _12_ as it is number of CPU cores I have. Use more If you can.
+
+## Instalation steps
+
 Magpar installation is divided into three steps: downloading, setting and finally installing. During installation we will have to download these libraries:
 
- - Atlas 3.6.0 
- - Lapack 3.8.0
- - libpng 1.4.1
- - ParMetis 3.1.1
- - Petsc 3.1 p8
- - Sundials 2.3.0
- - Zlib 1.2.4
- - Mpi
+- Atlas 3.6.0
+- Lapack 3.8.0
+- libpng 1.4.1
+- ParMetis 3.1.1
+- Petsc 3.1 p8
+- Sundials 2.3.0
+- Zlib 1.2.4
+- Mpi
 
 In next steps I will provide links to these libraries but these might change, so you will have to find them by yourself.
 
 ## Magpar setting and downloading
 
-First navigate to [Front Page of Magpar](http://www.magpar.net/) and download from download section source, documentation and examples (version 0.9). 
+First navigate to [Front Page of Magpar](http://www.magpar.net/) and download from download section source, documentation and examples (version 0.9).
 Open terminal and create work folder in home directory and download magpar.
 
-    cd 
+    cd
     mkdir work
     cd work
     wget http://www.magpar.net/static/magpar-0.9/download/magpar-0.9.tar.gz
     wget http://www.magpar.net/static/magpar-0.9/download/magpar-0.9_doc.tar.gz
     wget http://www.magpar.net/static/magpar-0.9/download/magpar-0.9_ex.tar.gz
+
 Now unzip files
 
     tar xzvf magpar-0.9.tar.gz
     tar xzvf magpar-0.9_ex.tar.gz
     tar xzvf magpar-0.9_doc.tar.gz
 
- Go to documentation folder and launch firefox 
- 
+Go to documentation folder and launch firefox
 
     firefox magpar-0.9/doc/html/install.html
-    
-   Webpage that should pop-out contains lots of information about certain steps of installation but some of them are outdated. If this instruction does not provide some information you can always search them on this webpage.
+
+Webpage that should pop-out contains lots of information about certain steps of installation but some of them are outdated. If this instruction does not provide some information you can always search them on this webpage.
 
 Now we will edit makefile.
 
@@ -48,23 +66,26 @@ Now we will edit makefile.
     cd src/
     cp Makefile.in.defaults Makefile.in.$HOSTNAME
     gedit Makefile.in.$HOSTNAME
-    
+
 Text fille will pop up. You have to find and edit certain lines so they will look like this:
 
     MAGPAR_HOME = $(HOME)/work/magpar-0.9
     PETSC_VERSION = 3.1.0
     liblapack=lapack-3.8.0
     MPI_DIR     = /usr/bin
-   Save and exit gedit. Now type:
+
+Save and exit gedit. Now type:
 
     gedit Makefile.in
-   Inside this file edit one line:
-   
+
+Inside this file edit one line:
+
     PETSC_DIR   = $(PD)/petsc-3.1-p8
-    
+
 For now that is all about magpar.
 
-## Downloading libraries 
+## Downloading libraries
+
 In this section I provide download links to libraries we need. In the future some of these links might not work. Then you will have to find them on your own.
 Go to libs folder and download all libraries we need:
 
@@ -76,24 +97,26 @@ Go to libs folder and download all libraries we need:
     wget https://computing.llnl.gov/projects/sundials/download/sundials-2.3.0.tar.gz
     wget https://www.zlib.net/fossils/zlib-1.2.4.tar.gz
     wget http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-3.1-p8.tar.gz
-   
-   All libraries are now downloaded (without mpi but this will be done later). Time for their installation
 
+All libraries are now downloaded (without mpi but this will be done later). Time for their installation
 
 ## Installation of the libraries
 
 ### Atlas
+
 From the previous step you should be in the libs folder. If so unzip Atlas library:
 
     cd $PD
     tar xzfv atlas3.6.0_Linux_PIIISSE1.tar.gz
-    
- We will proceed with the installation the same as described in magpar documentation:
+
+We will proceed with the installation the same as described in magpar documentation:
 
     ln -s Linux_* atlas
     lapacklib=$PD/atlas/lib/liblapack.a
     mv $lapacklib $lapacklib.atlas
+
 ### lapack
+
 When installing lapack we will again proceed similarly as in the documentation, but we will use different make file. If you don't have installed gfortran it will be also installed.
 
     cd $PD
@@ -103,12 +126,11 @@ When installing lapack we will again proceed similarly as in the documentation, 
     cd lapack-3.8.0
     cp make.inc.example make.inc
     make "FORTRAN=$FC" "LOADER=$FC" "TIMER=$TIMER"  "BLASLIB=$PD/atlas/lib/libf77blas.a $PD/atlas/lib/libatlas.a" "OPTS=-funroll-all-loops -O3 $OOPTS"  lapacklib
-    
 
 To check if everything was installed correctly type inside of the lapack folder:
 
     make lapack_testing
-    
+
 ### mpi
 
 For Ubuntu we can just used precompiled binaries from apt-get so we just have to type:
@@ -130,17 +152,18 @@ Again it will be done as in instruction, but we will change mpi that we will be 
     cd Graphs
     mpirun -np 4 ptest rotor.graph
     # more tests in ParMetis-3.1.1/INSTALL
+
 ### sundials
 
 Same as in documentation but we will change mpi in the configure program
 
-	cd $PD
-	lib=sundials-2.3.0
-	tar xzvf $lib.tar.gz
-	cd $lib
-	CFLAGS="-O3"; export CFLAGS
-	./configure --prefix=$PD/$lib --with-mpi-incldir=/usr/bin
-	make && make -i install
+    cd $PD
+    lib=sundials-2.3.0
+    tar xzvf $lib.tar.gz
+    cd $lib
+    CFLAGS="-O3"; export CFLAGS
+    ./configure --prefix=$PD/$lib --with-mpi-incldir=/usr/bin
+    make && make -i install
 
 It is always worth a while to check if the configure program didn't print out any mistakes . If magpar compilation will fail check if in lib folder inside sundials if parallel files are in. If not you may have a problem with mpi.
 
@@ -162,18 +185,19 @@ Petsc is using python script for installation. This script has to be edited by u
 Now open this script inside gedit (or different text editor)
 
     gedit config/PETSc-config-magpar.py
+
 In the file find correct lines of code (they have the same beginning) and replace them with these:
 
     '--LIBS=',
     '--with-mpi-dir=/usr/bin',
-  Also comment (by writing # at the beginning) these lines:
-  
+
+Also comment (by writing # at the beginning) these lines:
 
     #'-COPTFLAGS='+os.environ['OPTFLAGS'],
     #'-CXXOPTFLAGS='+os.environ['OPTFLAGS'],
     #'-FOPTFLAGS='+os.environ['OPTFLAGS'],
-  Save changes and exit gedit. Finally run the script and compile:
-  
+
+Save changes and exit gedit. Finally run the script and compile:
 
     ./config/PETSc-config-magpar.py
     #run command that will popout and the end of running script
@@ -181,7 +205,6 @@ In the file find correct lines of code (they have the same beginning) and replac
     # run tests (optional)
     make PETSC_DIR=$PD/petsc-3.1-p8 PETSC_ARCH=PETSc-config-magpar test
 
-  
 ### Zlib
 
 Zlib installation is also similar to documentation but we will run configure program.
@@ -194,8 +217,9 @@ Zlib installation is also similar to documentation but we will run configure pro
     ./configure
     make CFLAGS="-O -fPIC" && make test
 
- ### Libpng 
- Libpng is done totaly as in documentation, but we use newer version of the library.
+### Libpng
+
+Libpng is done totaly as in documentation, but we use newer version of the library.
 
     cd $PD
     lib=libpng-1.4.1
@@ -218,8 +242,9 @@ This one should be very simple, but you may encounter some compiling errors. If 
     cd $MAGPAR_HOME/src
     make
 
- # Magpar testing 
- After successful installation it is time to try if the program is working. Fortunately Magpar is provided with many examples inside of magpar-examples folder. When we want to run some example we need to begin with two things. First copy magpar.exe from src folder, then lunch mpi (if it's not running yet). Let's try magpar on nanodot example.
+# Magpar testing
+
+After successful installation it is time to try if the program is working. Fortunately Magpar is provided with many examples inside of magpar-examples folder. When we want to run some example we need to begin with two things. First copy magpar.exe from src folder, then lunch mpi (if it's not running yet). Let's try magpar on nanodot example.
 
 Go to the nanodot example folder:
 
@@ -231,5 +256,3 @@ Go to the nanodot example folder:
 Now the example should run! After it finishes you should see some additional files in the folder like the images of the simulation and so on. By using for example top command you can check if all cores of your machine are being used for performing simulation.
 
 One important thing, every time you relaunch terminal window all the variables to the paths (like $PD or $MAGPAR_HOME) will be gone. You will have to add them again all use more convenient approach by use of local paths (again basic knowledge of Linux is very useful).
-
-Happy physicsing!
